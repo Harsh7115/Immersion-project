@@ -11,24 +11,28 @@ app.layout = dbc.Container(
         html.H1("Toolkit Document Search", className="mb-4"),
         dbc.Row([
             dbc.Col([
-                dcc.Input(id="query-input", type="text",
-                          placeholder="Type your question...", debounce=True,
-                          style={"width": "100%", "padding": "10px"}),
+                dcc.Input(
+                    id="query-input",
+                    type="text",
+                    placeholder="Type your question...",
+                    debounce=True,
+                    style={"width": "100%", "padding": "10px"},
+                ),
                 html.Br(), html.Br(),
-                dbc.Button("Search", id="search-btn", color="primary")
-            ], md=8)
+                dbc.Button("Search", id="search-btn", color="primary"),
+            ], md=8),
         ]),
         html.Hr(),
-        html.Div(id="results-area")
+        html.Div(id="results-area"),
     ],
-    fluid=True
+    fluid=True,
 )
 
 @app.callback(
     Output("results-area", "children"),
     Input("search-btn", "n_clicks"),
     State("query-input", "value"),
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def search_callback(_, query):
     if not query:
@@ -42,7 +46,11 @@ def search_callback(_, query):
     for idx, r in enumerate(results):
         meta = r["metadata"]
         title = meta.get("name") or f"Document {meta.get('document_id')}"
-        subtitle = f"Created: {meta.get('create_date') or 'N/A'} | Published: {meta.get('publish_date') or 'N/A'} | Categories: {', '.join(meta.get('categories') or [])}"
+        subtitle = (
+            f"Created: {meta.get('create_date') or 'N/A'} | "
+            f"Published: {meta.get('publish_date') or 'N/A'} | "
+            f"Categories: {', '.join(meta.get('categories') or [])}"
+        )
         cards.append(
             dbc.Card(
                 [
@@ -55,26 +63,32 @@ def search_callback(_, query):
                                 id={"type": "collapse-btn", "index": idx},
                                 color="link",
                                 n_clicks=0,
-                                style={"float": "right"}
+                                style={"float": "right"},
                             ),
-                            html.Div(f"Score: {r['score']:.3f}", style={"float": "right", "marginRight": "1em"})
+                            html.Div(
+                                f"Score: {r['score']:.3f}",
+                                style={"float": "right", "marginRight": "1em"},
+                            ),
                         ],
-                        style={"display": "flex", "flexDirection": "column"}
+                        style={"display": "flex", "flexDirection": "column"},
                     ),
-                    dbc.CardBody(
-                        html.P(r["snippet"], style={"fontStyle": "italic"})
-                    ),
+                    dbc.CardBody(html.P(r["snippet"], style={"fontStyle": "italic"})),
                     dbc.Collapse(
                         dbc.CardBody(
-                            html.Pre(r["full_text"], style={"whiteSpace": "pre-wrap",
-                                                            "maxHeight": "300px",
-                                                            "overflowY": "auto"})
+                            html.Pre(
+                                r["full_text"],
+                                style={
+                                    "whiteSpace": "pre-wrap",
+                                    "maxHeight": "300px",
+                                    "overflowY": "auto",
+                                },
+                            )
                         ),
                         id={"type": "collapse", "index": idx},
-                        is_open=False
+                        is_open=False,
                     ),
                 ],
-                className="mb-3"
+                className="mb-3",
             )
         )
     return cards
@@ -82,7 +96,7 @@ def search_callback(_, query):
 @app.callback(
     Output({"type": "collapse", "index": MATCH}, "is_open"),
     Input({"type": "collapse-btn", "index": MATCH}, "n_clicks"),
-    State({"type": "collapse", "index": MATCH}, "is_open")
+    State({"type": "collapse", "index": MATCH}, "is_open"),
 )
 def toggle_collapse(n, is_open):
     if n:
