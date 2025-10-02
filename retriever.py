@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 from collections import defaultdict
 
 from preprocess import load_json, extract_text, chunk_text
+from spellcheck import autocorrect_query, load_custom_vocab
 
 # --------- Paths ---------
 DATA_DIR = Path("data")
@@ -64,13 +65,14 @@ def _load_or_build():
     if not (EMB_FILE.exists() and CHUNK_FILE.exists() and DOC_FILE.exists() and META_FILE.exists()):
         _build_index()
     print("🔄 Loading precomputed data...")
-    embeddings = np.load(EMB_FILE)
+    embeddings = np.load(EMB_FILE, allow_pickle=True)
     with open(CHUNK_FILE, "rb") as f:
         chunks, chunk_to_doc_idx = pickle.load(f)
     with open(DOC_FILE, "rb") as f:
         documents = pickle.load(f)
     with open(META_FILE, "rb") as f:
         metadata = pickle.load(f)
+    load_custom_vocab(documents)
     return chunks, chunk_to_doc_idx, documents, metadata, embeddings
 
 # Load on import
@@ -78,6 +80,11 @@ chunks, chunk_to_doc_idx, documents, metadata, embeddings = _load_or_build()
 
 # --------- Retrieval ---------
 def retrieve(query, top_k=5):
+    # Autocorrect step
+    query, suggestion = autocorrect_query(query)
+    if suggestion:
+        print(suggestion)  # Logs correction suggestion in console
+
     q_emb = model.encode([query], convert_to_numpy=True, normalize_embeddings=True)
     scores = (embeddings @ q_emb.T).squeeze()
 
