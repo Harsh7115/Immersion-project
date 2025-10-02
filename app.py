@@ -3,6 +3,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State, MATCH
 import dash_bootstrap_components as dbc
 from retriever import retrieve
+from spellcheck import autocorrect_query
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -38,11 +39,16 @@ def search_callback(_, query):
     if not query:
         return dbc.Alert("Please enter a query.", color="warning")
 
-    results = retrieve(query, top_k=5)
+    corrected_query, suggestion = autocorrect_query(query)
+    results = retrieve(corrected_query, top_k=5)
+
+    cards = []
+    if suggestion:
+        cards.append(dbc.Alert(suggestion, color="info"))
+
     if not results:
         return dbc.Alert("No results found.", color="danger")
 
-    cards = []
     for idx, r in enumerate(results):
         meta = r["metadata"]
         title = meta.get("name") or f"Document {meta.get('document_id')}"
