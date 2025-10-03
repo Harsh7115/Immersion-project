@@ -30,7 +30,7 @@ CONTENT_FILE = DATA_DIR / "Toolkit_Content_results.json"
 RESOURCES_FILE = DATA_DIR / "Toolkit_Resources_results.json"
 
 # Embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
+model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", use_auth_token=False)
 
 # --------- Build Index ---------
 def _build_index():
