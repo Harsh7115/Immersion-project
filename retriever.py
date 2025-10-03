@@ -3,9 +3,21 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from collections import defaultdict
+from huggingface_hub import InferenceClient
+from symspellpy import SymSpell, Verbosity
 
 from preprocess import load_json, extract_text, chunk_text
 from spellcheck import autocorrect_query, load_custom_vocab
+
+# To be removed # Initialize SymSpell
+sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+sym_spell.load_dictionary("data/frequency_dictionary_en_82_765.txt", term_index=0, count_index=1)
+
+def spell_correct(query: str) -> str:
+    suggestions = sym_spell.lookup(query, Verbosity.CLOSEST, max_edit_distance=2)
+    if suggestions:
+        return suggestions[0].term
+    return query
 
 # --------- Paths ---------
 DATA_DIR = Path("data")

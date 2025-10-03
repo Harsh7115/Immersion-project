@@ -14,5 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Hugging Face exposes port 7860
 EXPOSE 7860
-CMD ["python", "app.py"]
+
+# Run FastAPI with uvicorn
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "7860"]
