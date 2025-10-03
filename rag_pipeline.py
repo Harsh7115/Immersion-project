@@ -6,7 +6,7 @@ from retriever import retrieve
 
 import os
 
-HF_TOKEN = os.environ.get("HF_TOKEN") or "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"
+HF_TOKEN = os.environ.get("HF_TOKEN")
 if not HF_TOKEN:
     raise ValueError("Hugging Face token not found. Please set HF_TOKEN in your environment variables.")
 

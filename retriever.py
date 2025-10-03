@@ -11,7 +11,7 @@ from spellcheck import autocorrect_query, load_custom_vocab
 
 # To be removed # Initialize SymSpell
 sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
-sym_spell.load_dictionary("data/frequency_dictionary_en_82_765.txt", term_index=0, count_index=1)
+sym_spell.load_dictionary("data/freqdict.txt", term_index=0, count_index=1)
 
 def spell_correct(query: str) -> str:
     suggestions = sym_spell.lookup(query, Verbosity.CLOSEST, max_edit_distance=2)
