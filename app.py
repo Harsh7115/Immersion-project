@@ -3,11 +3,8 @@ from dash import dcc, html
 from dash.dependencies import Input, Output, State, MATCH
 import dash_bootstrap_components as dbc
 from retriever import retrieve
-<<<<<<< HEAD
 from spellcheck import autocorrect_query
-=======
 from rag_pipeline import rag_answer
->>>>>>> 36e8d364f4352cb1dae0a4713a7d873fdd824471
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
@@ -53,8 +50,6 @@ def search_callback(_, query):
     if not results:
         return dbc.Alert("No results found.", color="danger")
 
-<<<<<<< HEAD
-=======
     answer = rag_answer(query, results)
     
     answer_card = dbc.Card(
@@ -68,7 +63,6 @@ def search_callback(_, query):
     )
 
     cards = [answer_card]
->>>>>>> 36e8d364f4352cb1dae0a4713a7d873fdd824471
     for idx, r in enumerate(results):
         meta = r["metadata"]
         title = meta.get("name") or f"Document {meta.get('document_id')}"
