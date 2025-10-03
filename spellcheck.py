@@ -21,12 +21,15 @@ def autocorrect_query(query: str) -> tuple[str, str]:
 
     for w in words:
         candidates = spell.candidates(w)
-        # Prefer candidates from custom vocab if available
-        custom_candidates = [c for c in candidates if c in custom_vocab]
-        if custom_candidates:
-            corrected.append(custom_candidates[0])
+        if candidates:
+            # Prefer candidates from custom vocab if available
+            custom_candidates = [c for c in candidates if c in custom_vocab]
+            if custom_candidates:
+                corrected.append(custom_candidates[0])
+            else:
+                corrected.append(spell.correction(w) or w)
         else:
-            corrected.append(spell.correction(w) or w)
+            corrected.append(w)
 
     corrected_query = " ".join(corrected)
     if corrected_query != query:

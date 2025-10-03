@@ -2,52 +2,35 @@
 import os
 import time
 from huggingface_hub import InferenceClient
+from retriever import retrieve
 
-# 1. Get HF token from environment
-HF_TOKEN = os.environ.get("HF_TOKEN")
+import os
+
+HF_TOKEN = os.environ.get("HF_TOKEN") or "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"
 if not HF_TOKEN:
-    raise ValueError("HF_TOKEN environment variable is not set. Please export your Hugging Face token.")
+    raise ValueError("Hugging Face token not found. Please set HF_TOKEN in your environment variables.")
 
-# 2. Choose a small instruct-tuned model (good for free tier)
-MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
+hf_client = InferenceClient(
+    model="meta-llama/Meta-Llama-3-8B-Instruct",
+    token=HF_TOKEN
+)
 
-# 3. Create the inference client
-client = InferenceClient(model=MODEL_ID, token=HF_TOKEN)
+def rag_answer(query, top_k=5):
+    results = retrieve(query, top_k=top_k)
+    context = "\n\n".join([r["snippet"] for r in results])
 
-def rag_answer(query, retrieved_docs, max_retries=3):
-    """
-    Takes user query + retrieved docs, builds a prompt, and queries LLM.
-    retrieved_docs: list of dicts with at least "full_text"
-    """
+    # Build messages for conversational endpoint
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant. Use the provided context to answer."},
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion:\n{query}"}
+    ]
 
-    # Concatenate top-k docs into context
-    context = "\n\n".join([doc.get("full_text", "") for doc in retrieved_docs])
+    # Call Hugging Face Inference API for LLaMA 3 (chat completion)
+    response = hf_client.chat_completion(
+        messages=messages,
+        max_tokens=300,
+        temperature=0.7
+    )
 
-    # Build prompt
-    prompt = f"""You are a helpful assistant.
-I will provide some context from documents and then a question.
-Answer concisely and only based on the context.
-
-Context:
-{context}
-
-Question: {query}
-Answer:
-"""
-
-    # Call Hugging Face inference with retries
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = client.text_generation(prompt, max_new_tokens=300)
-            return response.strip()
-
-        except Exception as e:
-            # Log the error (prints in your terminal)
-            print(f"[RAG Pipeline] Error on attempt {attempt}: {repr(e)}")
-            if "503" in str(e) and attempt < max_retries:
-                print("Retrying after 3 seconds...")
-                time.sleep(3)
-                continue
-            return f"Error from LLM: {repr(e)}"
-
-    return "Error: max retries exceeded."
+    # The answer will be inside choices[0].message
+    return response.choices[0].message["content"], results
