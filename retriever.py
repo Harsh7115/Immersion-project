@@ -29,10 +29,10 @@ META_FILE = DATA_DIR / "metadata.pkl"       # metadata for each doc
 CONTENT_FILE = DATA_DIR / "Toolkit_Content_results.json"
 RESOURCES_FILE = DATA_DIR / "Toolkit_Resources_results.json"
 
-os.environ.pop("HF_HUB_TOKEN", None)
-os.environ.pop("HUGGINGFACE_TOKEN", None)
-os.environ.pop("HF_TOKEN", None)
-login(token=None, add_to_git_credential=False)
+# os.environ.pop("HF_HUB_TOKEN", None)
+# os.environ.pop("HUGGINGFACE_TOKEN", None)
+# os.environ.pop("HF_TOKEN", None)
+# login(token=None, add_to_git_credential=False)
 
 # Embedding model
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", use_auth_token=False)
