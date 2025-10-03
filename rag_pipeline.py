@@ -12,7 +12,8 @@ if not HF_TOKEN:
 
 hf_client = InferenceClient(
     model="meta-llama/Meta-Llama-3-8B-Instruct",
-    token=HF_TOKEN
+    token=HF_TOKEN,
+    timeout = 60
 )
 
 def rag_answer(query, top_k=5):
