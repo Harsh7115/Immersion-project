@@ -50,7 +50,6 @@ def search_callback(_, query):
     if not results:
         return dbc.Alert("No results found.", color="danger")
 
-<<<<<<< HEAD
     answer = rag_answer(query, results)
     
     answer_card = dbc.Card(
@@ -64,8 +63,6 @@ def search_callback(_, query):
     )
 
     cards = [answer_card]
-=======
->>>>>>> b42a15f (Added spellcheck module + 'Did you mean' suggestions with custom vocab)
     for idx, r in enumerate(results):
         meta = r["metadata"]
         title = meta.get("name") or f"Document {meta.get('document_id')}"
