@@ -3,7 +3,23 @@ from pathlib import Path
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from collections import defaultdict
+from huggingface_hub import InferenceClient
+from symspellpy import SymSpell, Verbosity
 
+from preprocess import load_json, extract_text, chunk_text
+from spellcheck import autocorrect_query, load_custom_vocab
+
+# To be removed # Initialize SymSpell
+sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+sym_spell.load_dictionary("data/frequency_dictionary_en_82_765.txt", term_index=0, count_index=1)
+
+def spell_correct(query: str) -> str:
+    suggestions = sym_spell.lookup(query, Verbosity.CLOSEST, max_edit_distance=2)
+    if suggestions:
+        return suggestions[0].term
+    return query
+
+# --------- Paths ---------
 DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 EMB_FILE = DATA_DIR / "embeddings.npy"
@@ -13,75 +29,35 @@ META_FILE = DATA_DIR / "metadata.pkl"       # metadata for each doc
 CONTENT_FILE = DATA_DIR / "Toolkit_Content_results.json"
 RESOURCES_FILE = DATA_DIR / "Toolkit_Resources_results.json"
 
+# Embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-# ---------- Helpers ----------
-def _load_json(filename):
-    with open(filename, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if isinstance(data, dict) and "results" in data:
-        return data["results"]
-    return data if isinstance(data, list) else []
-
-def _extract_text(item):
-    texts = []
-    for k in ("text", "description", "body", "content", "name"):
-        if k in item and item[k]:
-            texts.append(str(item[k]))
-    if "content_json" in item and isinstance(item["content_json"], dict):
-        for v in item["content_json"].values():
-            if isinstance(v, str) and v.strip():
-                texts.append(v)
-    return texts
-
-def _chunk_text(text, max_words=80):
-    sentences = re.split(r'(?<=[.!?]) +', text)
-    chunks, cur, count = [], [], 0
-    for s in sentences:
-        words = s.split()
-        if len(words) < 5: 
-            continue
-        if count + len(words) > max_words and cur:
-            chunks.append(" ".join(cur))
-            cur, count = [s], len(words)
-        else:
-            cur.append(s)
-            count += len(words)
-    if cur:
-        chunks.append(" ".join(cur))
-    return chunks
-
+# --------- Build Index ---------
 def _build_index():
     print("🔄 Building index...")
-    content = _load_json(CONTENT_FILE)
-    resources = _load_json(RESOURCES_FILE)
+    content = load_json("Toolkit_Content_results.json")
+    resources = load_json("Toolkit_Resources_results.json")
 
-    chunks = []
-    chunk_to_doc_idx = []
-    documents = []
-    metadata = []   # will store dict with name, id, dates
+    chunks, chunk_to_doc_idx, documents, metadata = [], [], [], []
 
     for item in content + resources:
-        # Combine all text for embeddings
-        full_text = "\n".join(_extract_text(item))
+        full_text = "\n".join(extract_text(item))
         if not full_text.strip():
             continue
 
         doc_idx = len(documents)
         documents.append(full_text)
 
-        # --- Metadata ---
         meta = {
             "document_id": item.get("document_id"),
             "name": item.get("name"),
             "create_date": item.get("create_date"),
             "publish_date": item.get("publish_date"),
-            "categories": item.get("categories")
+            "categories": item.get("categories"),
         }
         metadata.append(meta)
 
-        # --- Chunking ---
-        for ch in _chunk_text(full_text):
+        for ch in chunk_text(full_text):
             chunks.append(ch)
             chunk_to_doc_idx.append(doc_idx)
 
@@ -101,23 +77,29 @@ def _load_or_build():
     if not (EMB_FILE.exists() and CHUNK_FILE.exists() and DOC_FILE.exists() and META_FILE.exists()):
         _build_index()
     print("🔄 Loading precomputed data...")
-    embeddings = np.load(EMB_FILE)
+    embeddings = np.load(EMB_FILE, allow_pickle=True)
     with open(CHUNK_FILE, "rb") as f:
         chunks, chunk_to_doc_idx = pickle.load(f)
     with open(DOC_FILE, "rb") as f:
         documents = pickle.load(f)
     with open(META_FILE, "rb") as f:
         metadata = pickle.load(f)
+    load_custom_vocab(documents)
     return chunks, chunk_to_doc_idx, documents, metadata, embeddings
 
+# Load on import
 chunks, chunk_to_doc_idx, documents, metadata, embeddings = _load_or_build()
 
-# ---------- Retrieval ----------
+# --------- Retrieval ---------
 def retrieve(query, top_k=5):
+    # Autocorrect step
+    query, suggestion = autocorrect_query(query)
+    if suggestion:
+        print(suggestion)  # Logs correction suggestion in console
+
     q_emb = model.encode([query], convert_to_numpy=True, normalize_embeddings=True)
     scores = (embeddings @ q_emb.T).squeeze()
 
-    # Aggregate: pick the max scoring chunk per document
     doc_best = defaultdict(lambda: (-np.inf, None))  # (score, best_snippet)
     for idx, sc in enumerate(scores):
         doc_id = chunk_to_doc_idx[idx]

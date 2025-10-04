@@ -3,3 +3,7 @@ dash-bootstrap-components==1.6.0
 sentence-transformers>=2.6.0
 numpy>=1.23
 huggingface-hub>=0.23.0
+pyspellchecker
+fastapi==0.118.0
+uvicorn==0.37.0
+symspellpy==6.9.0
