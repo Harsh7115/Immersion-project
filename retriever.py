@@ -35,7 +35,8 @@ RESOURCES_FILE = DATA_DIR / "Toolkit_Resources_results.json"
 # login(token=None, add_to_git_credential=False)
 
 # Embedding model
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", use_auth_token=False)
+# model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2", use_auth_token=False)
+model = SentenceTransformer("BAAI/bge-base-en-v1.5")
 
 # --------- Build Index ---------
 def _build_index():

@@ -18,7 +18,7 @@ hf_client = InferenceClient(
 
 def rag_answer(query, top_k=5):
     results = retrieve(query, top_k=top_k)
-    context = "\n\n".join([r["snippet"] for r in results])
+    context = "\n\n".join([r["full_text"] for r in results])
 
     # Build messages for conversational endpoint
     messages = [
