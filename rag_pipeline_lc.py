@@ -9,20 +9,33 @@ import os
 # Instantiate your retriever
 retriever = AWCIMRetriever(top_k=5)
 
-HF_TOKEN = os.environ.get("HF_TOKEN")
-if not HF_TOKEN:
-    raise ValueError("Hugging Face token not found. Please set HF_TOKEN in your environment variables.")
+# HF_TOKEN = os.environ.get("HF_TOKEN")
+# if not HF_TOKEN:
+#     raise ValueError("Hugging Face token not found. Please set HF_TOKEN in your environment variables.")
 
-# Hugging Face LLM (can swap for local/Claude/OpenAI)
+# Rajesh AWS Account
+# llm = ChatBedrock(
+#     model_id="arn:aws:bedrock:us-east-1:088640340910:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",
+#     region_name="us-east-1",
+#     provider="anthropic",
+#     model_kwargs={
+#         "temperature": 0.7,
+#         "max_tokens": 300
+#     }
+# )
+
+# AWCIM AWS Account
 llm = ChatBedrock(
-    model_id="arn:aws:bedrock:us-east-1:088640340910:inference-profile/us.anthropic.claude-sonnet-4-20250514-v1:0",
+    model_id="anthropic.claude-3-sonnet-20240229-v1:0",  # ✅ On-demand model
     region_name="us-east-1",
     provider="anthropic",
     model_kwargs={
         "temperature": 0.7,
-        "max_tokens": 300
+        "max_tokens": 300,
+        "anthropic_version": "bedrock-2023-05-31"  # ✅ Required field for Anthropic 3.x
     }
 )
+
 
 # Prompt template
 template = """
