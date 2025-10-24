@@ -87,8 +87,13 @@ qa_chain = RetrievalQA.from_chain_type(
 def rag_answer_lc(query: str):
     """Return both answer and documents (sources)."""
     result = qa_chain.invoke({"query": query})
-    print(result.keys())
     answer = result.get("result") or result.get("answer") or str(result)
+    source_docs = result.get("source_documents", [])
+    uris = set()
+    for doc in source_docs:
+        metadata = getattr(doc, "metadata", {}) or {}
+        if metadata.get("uri"):
+            uris.add(metadata.get("uri"))
 
     # Return the same tuple format as before
-    return answer, result.get("source_documents", [])
+    return answer, list(uris), result.get("source_documents", [])

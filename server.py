@@ -16,10 +16,11 @@ app.add_middleware(
 @app.get("/ask")
 def ask(query: str):
     # Generate answer/context documents
-    answer, results = rag_answer_lc(query)
+    answer, uris, results = rag_answer_lc(query)
     return {
         "query": query,
         "answer": answer,
+        "intLinks": uris,
         "resources": results  # <-- include snippets + metadata
     }
 
