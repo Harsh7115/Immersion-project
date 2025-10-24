@@ -2,7 +2,7 @@
 import os
 import time
 from huggingface_hub import InferenceClient
-from retriever import retrieve
+from retriever import retrieve_internal, retrieve_external
 
 import os
 
@@ -17,8 +17,10 @@ hf_client = InferenceClient(
 )
 
 def rag_answer(query, top_k=5):
-    results = retrieve(query, top_k=top_k)
-    context = "\n\n".join([r["full_text"] for r in results])
+    intRes = retrieve_internal(query, top_k=top_k)
+    extRes = retrieve_external(query, top_k=top_k)
+
+    context = "\n\n".join([r["full_text"] for r in intRes])
 
     # Build messages for conversational endpoint
     messages = [
@@ -34,4 +36,4 @@ def rag_answer(query, top_k=5):
     )
 
     # The answer will be inside choices[0].message
-    return response.choices[0].message["content"], results
+    return response.choices[0].message["content"], intRes, extRes

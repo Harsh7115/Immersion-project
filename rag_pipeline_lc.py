@@ -89,6 +89,8 @@ def rag_answer_lc(query: str):
     result = qa_chain.invoke({"query": query})
     answer = result.get("result") or result.get("answer") or str(result)
     source_docs = result.get("source_documents", [])
+    extDocs = retriever.pop_external_links(query)
+    extUris = set([link['url'] for link in extDocs if link.get("url")])
     uris = set()
     for doc in source_docs:
         metadata = getattr(doc, "metadata", {}) or {}
@@ -96,4 +98,4 @@ def rag_answer_lc(query: str):
             uris.add(metadata.get("uri"))
 
     # Return the same tuple format as before
-    return answer, list(uris), result.get("source_documents", [])
+    return answer, list(uris), list(extUris), result.get("source_documents", [])
