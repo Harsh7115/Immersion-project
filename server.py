@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 # from rag_pipeline import rag_answer
 from rag_pipeline_lc import rag_answer_lc
@@ -14,8 +14,11 @@ app.add_middleware(
 )
 
 @app.get("/ask")
-def ask(query: str):
+def ask(query: str, request: Request):
     # Generate answer/context documents
+    forwarded_for = request.headers.get("x-forwarded-for")
+    client_ip = forwarded_for.split(",")[0] if forwarded_for else request.client.host
+    print(client_ip, query)
     answer, uris, extUris, results = rag_answer_lc(query)
     return {
         "query": query,
