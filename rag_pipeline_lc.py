@@ -90,12 +90,12 @@ def rag_answer_lc(query: str):
     answer = result.get("result") or result.get("answer") or str(result)
     source_docs = result.get("source_documents", [])
     extDocs = retriever.pop_external_links(query)
-    extUris = set([link['url'] for link in extDocs if link.get("url")])
-    uris = set()
+    extUris = {link['url']:link.get('name') for link in extDocs if link.get("url")}
+    uris = {}
     for doc in source_docs:
         metadata = getattr(doc, "metadata", {}) or {}
         if metadata.get("uri"):
-            uris.add(metadata.get("uri"))
+            uris[metadata.get("uri")] = metadata.get("name")
 
     # Return the same tuple format as before
-    return answer, list(uris), list(extUris), result.get("source_documents", [])
+    return answer, uris, extUris, result.get("source_documents", [])
